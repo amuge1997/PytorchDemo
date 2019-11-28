@@ -1,14 +1,15 @@
 import torch.nn as nn
 import torch.optim as optim
 import torch,numpy as np
+import matplotlib.pyplot as p
 
 # 准确度度量
 def accuracy(Y,L):
-    Ysize = X.size(0)
+    Ysize = Y.size(0)
     Lsize = L.size(0)
     if Ysize != Lsize:
         print('accuracy()  Y,L 的维度不一致')
-        return False
+        return False,False
     # 标签转换为 int 类型
     L = L.int()
 
@@ -46,7 +47,7 @@ optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 lossFunc = nn.BCELoss()
 
 def train(X,L,Xt,Lt):
-    for epoch in range(1000):
+    for epoch in range(100):
         # 模型转换为训练模式
         model.train()
         # 正向计算获得输出
@@ -63,8 +64,8 @@ def train(X,L,Xt,Lt):
         train_loss = loss.item()
         # 准确度
         train_acc,tfarr = accuracy(Y, L)
-
-        print('训练集\n    偏差为:{}\n    准确度:{}%'.format(train_loss,train_acc*100))
+        if train_acc is not False:
+            print('训练集\n    偏差为:{}\n    准确度:{}%'.format(train_loss,train_acc*100))
 
         # 模型转换为评估模式
         model.eval()
@@ -76,17 +77,16 @@ def train(X,L,Xt,Lt):
         test_loss = tloss.item()
         # 准确度
         test_acc,tfarr = accuracy(Yt, Lt)
-        print('测试集\n    偏差为:{}\n    准确度:{}%'.format(test_loss, test_acc*100))
-
+        if test_acc is not False:
+            print('测试集\n    偏差为:{}\n    准确度:{}%'.format(test_loss, test_acc*100))
         print()
-
 
 
 path = './Demo.pt'
 def save():
     torch.save(model.state_dict(), path)        # 只保存模型参数,但不保存模型本身,因此在加载模型的时候要定义原模型类
 
-def load():
+def load(Xt,Lt):
     model = Model()                             # 实例化模型
     model.load_state_dict(torch.load(path))     # 加载模型参数
     model.eval()
@@ -96,40 +96,48 @@ def load():
 
 
 if __name__ == '__main__':
-    Xn = np.array([
-        [0, 0],
-        [0, 1],
-        [1, 1],
-        [1, 0],
-    ], dtype=np.float32)
-    Ln = np.array([
-        [1, 0],
-        [1, 0],
-        [0, 1],
-        [0, 1],
-    ], dtype=np.float32)
 
-    X = torch.from_numpy(Xn)  # 训练样本,假如X的shape为m*n,m个样本,每个样本n个维度
-    L = torch.from_numpy(Ln)  # 训练标签,同理
+    miu1 = np.array([[-5,0]])
+    miu2 = np.array([[5,0]])
 
-    Xn = np.array([
-        [1, 1],
-        [1, 0],
-        [0, 0],
-        [0, 1],
-    ], dtype=np.float32)
-    Ln = np.array([
-        [0, 1],
-        [0, 1],
-        [1, 0],
-        [1, 0],
-    ], dtype=np.float32)
-    Xt = torch.from_numpy(Xn)  # 测试样本,同理
-    Lt = torch.from_numpy(Ln)  # 测试标签,同理
+    n = 100
+    Xn1 = np.random.randn(n, 2) + miu1
+    Ln1 = np.zeros((n, 2))
+    Ln1[:, 0] = 1.0
+    Xn2 = np.random.randn(n, 2) + miu2
+    Ln2 = np.zeros((n, 2))
+    Ln2[:, 1] = 1.0
 
-    # train(X, L, Xt, Lt)
-    # save()
-    # load()
+    Xn = np.r_[Xn1,Xn2]
+    Ln = np.r_[Ln1,Ln2]
+
+    Xtrain = torch.from_numpy(Xn).float()        # 训练集样本
+    Ltrain = torch.from_numpy(Ln).float()        # 训练集标签
+
+    n = 25
+    Xn1 = np.random.randn(n, 2) + miu1
+    Ln1 = np.zeros((n, 2))
+    Ln1[:, 0] = 1.0
+    Xn2 = np.random.randn(n, 2) + miu2
+    Ln2 = np.zeros((n, 2))
+    Ln2[:, 1] = 1.0
+
+    Xn = np.r_[Xn1, Xn2]
+    Ln = np.r_[Ln1, Ln2]
+
+    Xtest = torch.from_numpy(Xn).float()       # 测试集样本
+    Ltest = torch.from_numpy(Ln).float()       # 测试集标签
+
+    p.scatter(Xtrain[:, 0], Xtrain[:, 1], color='blue')
+    p.scatter(Xtest[:, 0], Xtest[:, 1], color='red')
+    p.xlim(-10,10)
+    p.ylim(-10,10)
+    p.grid()
+    # p.show()
+
+    train(Xtrain, Ltrain, Xtest, Ltest)         # 训练
+    # save()                    # 保存
+    # load(Xtest, Ltest)                    # 加载
 
 
 
