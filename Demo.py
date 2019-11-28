@@ -14,12 +14,17 @@ def accuracy(Y,L):
 
     correct = 0
     number = Ysize
-    for y,l in zip(Y,L):
+    true_false_array = np.zeros(Ysize,dtype=np.int)
+    for i,(y,l) in enumerate(zip(Y,L)):
         # 以0.5为阈值归为0或者1
         y = y.ge(0.5).int()
         if False not in torch.eq(y,l):
             correct += 1
-    return correct/number
+            true_false_array[i] = 1
+    acc = correct/number
+
+    # true_false_array中,每一位置1表示该索引位置预测正确,置0表示预测错误
+    return acc,true_false_array
 
 class Model(nn.Module):  # 定义模型
     def __init__(self):
@@ -41,7 +46,7 @@ optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 lossFunc = nn.BCELoss()
 
 def train(X,L,Xt,Lt):
-    for epoch in range(100):
+    for epoch in range(1000):
         # 模型转换为训练模式
         model.train()
         # 正向计算获得输出
@@ -57,13 +62,12 @@ def train(X,L,Xt,Lt):
         # 获取损失值
         train_loss = loss.item()
         # 准确度
-        train_acc = accuracy(Y, L)
+        train_acc,tfarr = accuracy(Y, L)
 
         print('训练集\n    偏差为:{}\n    准确度:{}%'.format(train_loss,train_acc*100))
 
         # 模型转换为评估模式
         model.eval()
-        # 与自动梯度有关
         # 正向计算获得输出
         Yt = model(Xt)
         # 计算损失
@@ -71,10 +75,24 @@ def train(X,L,Xt,Lt):
         # 获取损失值
         test_loss = tloss.item()
         # 准确度
-        test_acc = accuracy(Yt, Lt)
+        test_acc,tfarr = accuracy(Yt, Lt)
         print('测试集\n    偏差为:{}\n    准确度:{}%'.format(test_loss, test_acc*100))
 
         print()
+
+
+
+path = './Demo.pt'
+def save():
+    torch.save(model.state_dict(), path)        # 只保存模型参数,但不保存模型本身,因此在加载模型的时候要定义原模型类
+
+def load():
+    model = Model()                             # 实例化模型
+    model.load_state_dict(torch.load(path))     # 加载模型参数
+    model.eval()
+    Yt = model(Xt)
+    acc = accuracy(Yt,Lt)
+    print(acc)
 
 
 if __name__ == '__main__':
@@ -109,7 +127,25 @@ if __name__ == '__main__':
     Xt = torch.from_numpy(Xn)  # 测试样本,同理
     Lt = torch.from_numpy(Ln)  # 测试标签,同理
 
-    train(X,L,Xt,Lt)
+    # train(X, L, Xt, Lt)
+    # save()
+    # load()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
