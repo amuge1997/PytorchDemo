@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch.optim as optim
-from torch.autograd import Variable
 import torch,numpy as np
 
 # 准确度度量
@@ -45,13 +44,10 @@ def train(X,L,Xt,Lt):
     for epoch in range(100):
         # 模型转换为训练模式
         model.train()
-        # 与自动梯度有关
-        Xval = Variable(X)
-        Lval = Variable(L)
         # 正向计算获得输出
-        Y = model(Xval)
+        Y = model(X)
         # 与模型连接
-        loss = lossFunc(Y, Lval)
+        loss = lossFunc(Y, L)
         # 梯度初始化归零,准备优化
         optimizer.zero_grad()
         # 反向传播,更新梯度
@@ -68,12 +64,10 @@ def train(X,L,Xt,Lt):
         # 模型转换为评估模式
         model.eval()
         # 与自动梯度有关
-        Xtval = Variable(Xt)
-        Ltval = Variable(Lt)
         # 正向计算获得输出
-        Yt = model(Xtval)
+        Yt = model(Xt)
         # 计算损失
-        tloss = lossFunc(Yt, Ltval)
+        tloss = lossFunc(Yt, Lt)
         # 获取损失值
         test_loss = tloss.item()
         # 准确度
