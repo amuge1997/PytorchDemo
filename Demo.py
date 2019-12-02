@@ -136,8 +136,8 @@ if __name__ == '__main__':
     # p.show()
 
     train(Xtrain, Ltrain, Xtest, Ltest)         # 训练
-    # save()                    # 保存
-    # load(Xtest, Ltest)                    # 加载
+    # save()                                    # 保存
+    # load(Xtest, Ltest)                        # 加载
 
 
 
